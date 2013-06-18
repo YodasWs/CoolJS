@@ -1,0 +1,21 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+<title>Fireworks v1.2</title>
+<style type="text/css">
+body { text-align: center; }
+hgroup, canvas { display: block; }
+hgroup > h1 { margin-bottom: 0; }
+hgroup > h2 { margin-top: 0; }
+div#fireworks { width: 1000px; height: 450px; position: relative; margin: 1em auto; }
+canvas { border: 1px solid black; border-radius: 10px; margin: 0 auto; position: absolute; top: 0; left: 0; }
+</style>
+<script src="scripts/fireworks.js" type="text/javascript" async></script>
+<body onload="loadCanvas('firework1','firework2')">
+<hgroup><h1>Fireworks</h1><h2>Version 1.2</h2></hgroup>
+<div id="fireworks">
+<canvas width="1000" height="450" id="firework1" onclick="toggleFireworks('firework1', 'firework2')"></canvas>
+<canvas width="1000" height="450" id="firework2" onclick="toggleFireworks('firework1', 'firework2')"></canvas>
+</div>
+</body>
+</html>
