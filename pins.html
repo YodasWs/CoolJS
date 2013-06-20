@@ -2,7 +2,6 @@
 <html>
 <head>
 <title>Pins!</title>
-<!--[if lt IE 9]><script type="text/javascript" src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
 <style type="text/css">
 body { font-size: normal; margin: 0; padding: 0; }
 aside, footer, header, section { display: block; }
@@ -22,6 +21,7 @@ aside:nth-of-type(even) { float: right; clear: right; }
 aside:nth-of-type(odd) { float: left; clear: left; }
 label { cursor: pointer; }
 </style>
+<!--[if lt IE 9]><script type="text/javascript" src="http://yodas.ws/api/html5shiv.js"></script><![endif]-->
 <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
 <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.23/jquery-ui.min.js"></script>
 <!--[if lt IE 9]><script type="text/javascript">
@@ -33,6 +33,16 @@ $(document).ready(function() {
 });
 </script><![endif]-->
 <script type="text/javascript">
+// Array::indexOf(), from http://stackoverflow.com/questions/1744310/how-to-fix-array-indexof-in-javascript-for-ie-browsers
+if (!Array.prototype.indexOf) {
+	Array.prototype.indexOf = function(obj, start) {
+		for (var i = (start || 0), j = this.length; i < j; i++)
+			if (this[i] === obj)
+				return i;
+		return -1;
+	}
+}
+
 var objDragging = {
 	'id':'',
 	'offset':{'top':0,'left':0}
@@ -113,7 +123,7 @@ function resize(animate, callback) {
 		var lMargin = Math.floor(($('section').width() - numColumns * $('section > div').outerWidth(true)) / 2);
 		var i = -1;
 		$('section > div').each(function() {
-			eval('i = columnHeights.indexOf(Math.min(' + columnHeights.toString() + '));');
+			eval('i = columnHeights.indexOf(Math.min(' + columnHeights.join() + '));');
 			css = {
 				'position':'absolute',
 				'left':$('section > div').outerWidth(true)*i+lMargin,
