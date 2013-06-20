@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Pins!</title>
+<style type="text/css">
+body { font-size: normal; margin: 0; padding: 0; }
+aside, footer, header, section { display: block; }
+header { text-align: center; position: fixed; width: 100%; margin: 0 0 1em; background: white; z-index: 1;
+	border-bottom: 2px solid dodgerblue; }
+header > h1 { font-size: xx-large; letter-spacing: 30px; word-spacing: 20px; }
+section { width: 80%; margin: 0 auto; position: relative; }
+section > div { display: block; width: 200px; border: 1px solid black; min-height: 50px; margin: 10px; }
+section > div > img { max-width: 98%; display: block; margin: 1em auto; }
+[draggable=true] { -khtml-user-drag: element;
+	-webkit-user-select: element; -ms-user-select: element; -moz-user-select: -moz-element; user-select: element;
+	cursor: move; cursor: -webkit-grab; cursor: -moz-grab;
+}
+p { text-align: center; }
+aside { border: 1px solid black; border-radius: 10px; background: lightblue; padding: 5px; margin: 0 1em 1em; }
+aside:nth-of-type(even) { float: right; clear: right; }
+aside:nth-of-type(odd) { float: left; clear: left; }
+label { cursor: pointer; }
+</style>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.23/jquery-ui.min.js"></script>
+<script type="text/javascript">
+var objDragging = {
+	'id':'',
+	'offset':{'top':0,'left':0}
+};
+var pins = [
+	'http://yodas.ws/2009/11/river.JPG',
+	'http://yodas.ws/2009/11/tree2.JPG',
+	'http://yodas.ws/2009/11/gongju2.JPG',
+	'http://yodas.ws/2008/04/bigben2.JPG',
+	'http://yodas.ws/2006/04/capitol.JPG',
+	'http://yodas.ws/2004/05/cathedral2.JPG'
+];
+function cancel(event) {
+
+	if (event.preventDefault) event.preventDefault();
+	return false;
+}
+function pickUpObj(event) {
+	objDragging.id = event.target.getAttribute('id');
+	objDragging.offset.left = event.pageX - $(event.target).offset().left;
+	objDragging.offset.top = event.pageY - $(event.target).offset().top;
+}
+function setDownObj(event) {
+	cancel(event);
+	placement = $(event.target).closest('.dropzone');
+	movingBox = $('#' + objDragging.id).closest('.dropzone');
+	if (placement.index() == movingBox.index()) return;
+	movingBox.css({
+		'min-height':'0',
+		'height':movingBox.height()
+	});
+	byeBox = function() {
+		if (placement.index() < movingBox.index()) placement.before(movingBox);
+		else placement.after(movingBox);
+		resize($('#animateboxes').is(':checked'), function() {
+			if ($('#animateboxes').is(':checked')) movingBox.slideDown(1100, 'easeOutBounce');
+			else movingBox.show();
+		});
+	};
+	if ($('#animateboxes').is(':checked')) movingBox.fadeOut(500, byeBox);
+	else { movingBox.hide(); byeBox(); }
+	return false;
+}
+$(document).ready(function() {
+	for (i=0; i<pins.length*8; i++) {
+		ele = $('<div></div>').addClass('dropzone').html('<img draggable="true" src="' + pins[i%pins.length] + '"/>');
+		if (i % 2 == 1) $(ele).css('min-height', '200px');
+		if (i % 3 == 2) $(ele).css('min-height', '150px');
+		if (i % 5 == 3) $(ele).css('min-height', '350px');
+		if (i % 7 == 4) $(ele).css('min-height', '400px');
+		$('section').append(ele);
+	}
+	$('section > div').each(function() {
+		$(this).css({'position':'absolute', 'left':0, 'top':0});
+	});
+	var headerHeight = $('header').outerHeight(true);
+	$('body').css('padding-top',headerHeight+'px');
+	$('header').css('margin-top','-'+headerHeight+'px');
+	$(window).resize(resize);
+	resize(false);
+	$('.dropzone').each(function() {
+		$(this).bind('drop', setDownObj).bind('dragover', cancel).bind('dragenter', cancel);
+	});
+	$('[draggable=true]').each(function() {
+		$(this).data('startY', $(this).offset().top);
+		$(this).data('startX', $(this).offset().left);
+		$(this).attr('title', 'Drag Me !');
+	});
+	$('[draggable=true]').each(function(i) {
+		if ($(this).attr('id') == null) $(this).attr('id', 'drag' + i);
+		if (this.addEventListener) this.addEventListener('dragstart', pickUpObj);
+		if (this.addEvent) this.attachEvent('dragstart', pickUpObj);
+	});
+});
+function resize(animate, callback) {
+	if ($('section > div').length > 0) {
+		var columnHeights = [];
+		var numColumns = Math.floor($('section').width() / $('section > div').outerWidth(true));
+		for (i=0; i<numColumns; i++) columnHeights[i] = $('section').height();
+		var lMargin = Math.floor(($('section').width() - numColumns * $('section > div').outerWidth(true)) / 2);
+		var i = -1;
+		$('section > div').each(function() {
+			eval('i = columnHeights.indexOf(Math.min(' + columnHeights.toString() + '));');
+			css = {
+				'position':'absolute',
+				'left':$('section > div').outerWidth(true)*i+lMargin,
+				'top':columnHeights[i]
+			};
+			if (animate == true) $(this).animate(css, 1000, 'easeInOutBack');
+			else $(this).css(css);
+			columnHeights[i] += $(this).outerHeight(true);
+		});
+	}
+	if (typeof callback == 'function') callback();
+}
+</script>
+</head>
+<body>
+<header>
+<h1>Lots of Pics!</h1>
+</header>
+<aside><img src="http://www.w3.org/html/logo/downloads/HTML5_1Color_White.png" height="100" /></aside>
+<aside><label><input type="checkbox" id="animateboxes" checked /> Animated</label></aside>
+<section>
+<p>Welcome! Please fill free to drag the images!</p>
+</section>
+</body>
+</html>
