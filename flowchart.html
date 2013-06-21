@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en-us" xmlns="http://www.w3.org/TR/html5">
+<head>
+<title>SVG Flowchart</title>
+<style type="text/css">
+h1, h2 { text-align: center; }
+code#codeSVG {
+	display: block; max-width: 800px; padding: 5px 10px; margin: 1em auto;
+	white-space: pre-line; border: 1px solid black;
+}
+div#flowchart { position: relative; }
+div#flowchart, svg#output {
+	display: block; border: 1px solid black; margin: 1em auto;
+	width: 800px; height: 500px; overflow: hidden;
+}
+svg#background { display: none; }
+menu { display: block; list-style: none; margin: 0; padding: 0; }
+menu#addItemType { float: left; }
+menu#elementStyling { float: right; }
+menu > li {
+	display: block; margin: 0; height: 2.5ex; width: 100%;
+	-webkit-box-sizing: border-box; -moz-box-sizing: border-box; box-sizing: border-box;
+}
+menu label {
+	cursor: pointer; height: 100%; width: 100%; display: block;
+	-webkit-box-sizing: border-box; -moz-box-sizing: border-box; box-sizing: border-box;
+}
+</style>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+<script type="text/javascript">
+var outputSVG = function() {
+	// Match SVG to HTML/CSS
+	$('svg#output g').each(function() {
+		if (!$(this).attr('id') || $(this).attr('id') == '') return false;
+		var id = parseInt($(this).attr('id').substring($(this).attr('id').indexOf('_')+1), 10);
+		var text = $(this).find('text');
+		var html = $('div#htmlRect_' + id);
+		$(this).find('rect').first().attr({
+			// Adjust Size to Fit Text
+			'width':Math.max(
+				parseInt(html.css('min-width'), 10),
+				text.width(),
+				10
+			) + parseInt(html.css('padding-left'), 10) + parseInt(html.css('padding-right'), 10),
+			'height':Math.max(
+				parseInt(html.css('font-size'), 10),
+				text.height(),
+				19
+			) + parseInt(html.css('padding-top'), 10) + parseInt(html.css('padding-top'), 10),
+			// Adjust Coloring
+			'fill':html.css('background-color'),
+			'stroke':html.css('border-color'),
+			'stroke-width':parseFloat(html.css('border-width')),
+			'x':'-'+parseInt(html.css('padding-left'), 10),
+			'y':'-'+parseInt(html.css('padding-top'), 10)
+		});
+		$(this).find('ellipse').first().each(function() {
+			// Adjust Size to Fit Text
+			var width = Math.max(
+				parseInt(html.css('min-width'), 10),
+				text.width(),
+				10
+			) + parseInt(html.css('padding-left'), 10) + parseInt(html.css('padding-right'), 10);
+			var height = Math.max(
+				parseInt(html.css('font-size'), 10),
+				text.height(),
+				19
+
+			) + parseInt(html.css('padding-top'), 10) + parseInt(html.css('padding-bottom'), 10);
+			$(this).attr({
+				'cx':width/2 - parseInt(html.css('padding-left'), 10),
+				'rx':width/2,
+				'cy':height/2 - parseInt(html.css('padding-top'), 10),
+				'ry':height/2
+			});
+		});
+	});
+
+	// Draw Links
+	var deadLinks = [];
+	$('svg > path.link').remove();
+	for (var i in objFlowChart.arrLinks) {
+		var boxA = objFlowChart.arrLinks[i][0];
+		var boxB = objFlowChart.arrLinks[i][1];
+		if ($('#htmlRect_' + boxA).length == 0 || $('#htmlRect_' + boxB).length == 0) {
+			deadLinks.push(i);
+			continue;
+		}
+		// Gather Box Points
+		var rectA = {
+			x:$('#htmlRect_' + boxA).offset().left - $('div#flowchart').offset().left - parseInt($('#htmlRect_' + boxA).css('padding-left'), 10),
+			y:$('#htmlRect_' + boxA).offset().top - $('div#flowchart').offset().top - parseInt($('#htmlRect_' + boxA).css('padding-top'), 10),
+			height:$('#htmlRect_' + boxA).outerHeight(false),
+			width:$('#htmlRect_' + boxA).outerWidth(false),
+			point:'left'
+		};
+		var rectB = {
+			x:$('#htmlRect_' + boxB).offset().left - $('div#flowchart').offset().left - parseInt($('#htmlRect_' + boxB).css('padding-left'), 10),
+			y:$('#htmlRect_' + boxB).offset().top - $('div#flowchart').offset().top - parseInt($('#htmlRect_' + boxB).css('padding-top'), 10),
+			height:$('#htmlRect_' + boxB).outerHeight(false),
+			width:$('#htmlRect_' + boxB).outerWidth(false),
+			point:'left'
+		};
+		// Determine End Points on Rectangle
+		var line = (objFlowChart.arrLinks[i].line == 'auto') ? 'horizontal' : objFlowChart.arrLinks[i].line;
+		if (
+			(rectA.x < rectB.x && rectA.x + rectA.width > rectB.x && objFlowChart.arrLinks[i].line != 'horizontal') ||
+			(rectB.x < rectA.x && rectB.x + rectB.width > rectA.x && objFlowChart.arrLinks[i].line != 'horizontal') ||
+			objFlowChart.arrLinks[i].line == 'vertical'
+		) {
+			if (objFlowChart.arrLinks[i].line == 'auto') line = 'vertical';
+			if (rectA.y + rectA.height > rectB.y) {
+				rectA.point = 'top'; rectB.point = 'bottom';
+			} else if (rectB.y + rectB.height > rectA.y) {
+				rectA.point = 'bottom'; rectB.point = 'top';
+			}
+		} else if (rectA.x + rectA.width < rectB.x) {
+			rectA.point = 'right'; rectB.point = 'left';
+		} else if (rectB.x + rectB.width < rectA.x) {
+			rectA.point = 'left'; rectB.point = 'right';
+		}
+		// Calculate Points' (x,y)
+		$.each([rectA,rectB], function(i, rect) {
+			switch (rect.point) {
+			case 'bottom':
+				rect.x += rect.width / 2;
+				rect.y += rect.height - 2;
+				break;
+			case 'top':
+				rect.x += rect.width / 2;
+				break;
+			case 'left':
+				rect.y += rect.height / 2;
+				break;
+			case 'right':
+				rect.x += rect.width - 1;
+				rect.y += rect.height / 2;
+				break;
+			}
+		});
+		// Draw Link
+		var dx = rectB.x - rectA.x;
+		var dy = rectB.y - rectA.y;
+		var svgLink = '<path class="link" d="M ' + rectA.x + ' ' + rectA.y;
+		switch (line) {
+		case 'horizontal':
+			svgLink += ' h ' + Math.floor(dx/2) + ' v ' + dy + ' h ' + Math.ceil(dx/2);
+			break;
+		case 'vertical':
+			svgLink += ' v ' + Math.floor(dy/2) + ' h ' + dx + ' v ' + Math.ceil(dy/2);
+			break;
+		}
+		svgLink += '" style="stroke:black;stroke-width:1;fill:none;"/>';
+		$('svg#output').prepend(svgLink);
+		$('svg#background').prepend(svgLink);
+	}
+	for (var i in deadLinks) {
+		// Remove Dead Links
+		objFlowChart.arrLinks.splice(deadLinks[i], 1);
+	}
+
+	// Grab SVG as HTML
+	var html = $('<div>').append($('svg#output').clone()).html();
+
+	// TODO: Transcribe HTML into valid XML
+	var xml = html;
+
+	// Output SVG
+	$('code#codeSVG').text(xml);
+	updateSVG();
+
+	// Display XML
+	xml = xml.replace(/[.\n]*<svg(.*?)>\s*/g, "<svg$1>\n");
+	xml = xml.replace(/<\/g>\s*/g, "</g>\n");
+	xml = xml.replace(/<path(.*?)\/?>(<\/path>)?\s*/g, "<path$1/>\n");
+	xml = xml.replace(/<rect(.*?)\/?>(<\/rect>)?\s*/g, "<rect$1/>\n");
+	$('code#codeSVG').text("<\?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + xml);
+}
+var updateSVG = function() {
+	// TODO: Scrub unwanted text
+	var xml = $('code#codeSVG').text();
+	xml = xml.replace(/[.\n]*<svg/g, '<svg');
+	xml = xml.replace(/<\/svg>[.\n]*/g, '</svg>');
+	xml = xml.replace(/<\/g>\s*/g, "</g>");
+	xml = xml.replace(/<!--[.\n]*?-->/g, '');
+	$('svg#output').wrap('<div>').parent().html(xml);
+	$('svg#output').siblings().remove();
+	$('svg#output').unwrap();
+};
+var objFlowChart = {
+	intMaxBoxNum:0,
+	eleActive:null,
+	arrLinks:[]
+};
+var activateTools = function() {
+	// Clear Last Tool
+	objFlowChart.eleActive = null;
+	$('div#flowchart > div[id^="htmlRect_"]').css({outline:''});
+
+	// Set Environment for Selected Tool
+	switch ($('input[name="newItemType"]:checked').attr('value')) {
+	case 'textbox':
+		$('#elementStyling').html('').append(
+			'<li><label><input type="radio" name="boxShape" value="rect" checked />Rectangle'
+		).append(
+			'<li><label><input type="radio" name="boxShape" value="ellipse" />Ellipse'
+		).show();
+		break;
+	case 'link':
+		$('#elementStyling').html('').append(
+			'<li><label><input type="radio" name="lnkLine" value="auto" checked />Auto'
+		).append(
+			'<li><label><input type="radio" name="lnkLine" value="horizontal" />Horizontal'
+		).append(
+			'<li><label><input type="radio" name="lnkLine" value="vertical" />Vertical'
+		).show();
+		break;
+	default:
+		$('#elementStyling').html('').hide();
+	}
+
+	// Make Text Boxes Editable
+	if ($.inArray($('input[name="newItemType"]:checked').attr('value'), ['textbox','select']) != -1) {
+		$('div#flowchart > div[id^="htmlRect_"]').attr('contenteditable','true');
+	} else {
+		$('div#flowchart > div[id^="htmlRect_"]').attr('contenteditable','false');
+	}
+
+	// Set Text Box Interaction
+	$('div#flowchart > div[id^="htmlRect_"]').unbind('click').click(function() {
+		switch ($('input[name="newItemType"]:checked').attr('value')) {
+		case 'textbox':
+		case 'select':
+			// Contenteditable = true, prevent default behavior and stop bubbling
+			return false;
+		case 'link': // Linking Boxes
+			$('div#flowchart > div[id^="htmlRect_"]').css({outline:'0 none'});
+			if (!objFlowChart.eleActive) {
+				// Set as Active Element
+				objFlowChart.eleActive = this;
+				$(this).css({outline:'1px solid dodgerblue'});
+			} else {
+				var a = Math.min($(objFlowChart.eleActive).data('rect'),$(this).data('rect'));
+				var b = Math.max($(objFlowChart.eleActive).data('rect'),$(this).data('rect'));
+				objFlowChart.eleActive = null;
+				if (a == b) return false;
+				// Check for Active Link
+				for (var i in objFlowChart.arrLinks)
+					if (objFlowChart.arrLinks[i][0] == a && objFlowChart.arrLinks[i][1] == b) return false;
+				// Create Link
+				objFlowChart.arrLinks.push({
+					0:a,1:b,'line':$('input[name="lnkLine"]:checked').val()
+				});
+				outputSVG();
+			}
+			return false;
+		}
+	}).unbind('keyup').keyup(function(event) {
+		switch ($('input[name="newItemType"]:checked').attr('value')) {
+		case 'textbox':
+		case 'select':
+			$('#svgRect_' + $(this).data('rect')).find('text').text($(this).text());
+			if ($(this).text() == '' && event.keyCode == 46) { // delete
+				$('#svgRect_' + $(this).data('rect')).remove();
+				$(this).remove();
+			}
+			outputSVG();
+			break;
+		}
+	});
+};
+$(document).ready(function() {
+	$('svg').attr('viewBox', '0 0 ' + $('div#flowchart').width() + ' ' + $('div#flowchart').height());
+	$('code#codeSVG').keyup(function(e) {
+		switch (e.keyCode) {
+		case 16: // shift
+			return false;
+		}
+		if (e.shiftKey) switch (e.keyCode) {
+		case 13: // enter
+			outputSVG();
+			break;
+		default:
+			updateSVG();
+		} else switch (e.keyCode) {
+		default:
+			updateSVG();
+		}
+	}).blur(function() {
+		outputSVG();
+	});
+	$('div#flowchart').click(function(event) {
+	switch ($('input[name="newItemType"]:checked').attr('value')) {
+	case 'textbox':
+		var intRect = objFlowChart.intMaxBoxNum++;
+		// Add New Text Box
+		var newRect = $('<div contenteditable="true">').css({
+			'min-width':'100px','min-height':'20px',border:'1px solid black',position:'absolute',padding:'2px 5px',
+			left:event.pageX-5,top:event.pageY-10
+		}).attr('id', 'htmlRect_' + intRect).data({
+
+			'shape':$('input[name="boxShape"]:checked').val(),
+			'rect':intRect
+		});
+		$(this).append(newRect);
+		// Properly Place Box at Cursor
+		$(newRect).focus().parents().each(function() {
+			if ($.inArray($(this).css('position'), ['relative','absolute']) > -1) {
+				$(newRect).css({
+					top:parseInt($(newRect).css('top'), 10) - $(this).offset().top,
+					left:parseInt($(newRect).css('left'), 10) - $(this).offset().left
+				});
+			}
+		});
+		// Have HTML Box Match Desired Shape
+		switch ($('input[name="boxShape"]:checked').val()) {
+		case 'ellipse':
+			$(newRect).css({'border-radius':'100%'});
+			break;
+
+		case 'rect':
+			$(newRect).css({'border-radius':'0'});
+			break;
+		}
+		// Add to SVG
+		// Build SVG
+		switch ($('input[name="boxShape"]:checked').val()) {
+
+		case 'ellipse':
+
+			svgNewRect = '<ellipse rx="5" ry="7" cx="5" cy="7" ' +
+				'style="stroke:black;stroke-width:1;fill:white"' +
+				'/>';
+			break;
+		case 'rect':
+			svgNewRect = '<rect width="10" height="14" ' +
+				'stroke="black" stroke-width="1" fill="white"' +
+				'/>';
+			break;
+		}
+		// Output SVG
+		$('svg#output').append(
+			$('<g>').attr('id', 'svgRect_' + intRect).append(svgNewRect).append('<text y="14">').attr('transform', 'translate(' +
+				(newRect.offset().left - $('div#flowchart').offset().left) + ',' +
+				(newRect.offset().top - $('div#flowchart').offset().top) + ')')
+		);
+		activateTools();
+		outputSVG();
+		return false;
+	case 'link':
+		if ($(event.target).attr('id') == 'flowchart') {
+			$('div#flowchart > div[id^="htmlRect_"]').css({outline:'0 none'});
+			objFlowChart.eleActive = null;
+		}
+		return false;
+	}});
+	$('input[name="newItemType"]').change(activateTools);
+	$('svg#background').css({
+		position:'absolute',top:$('div#flowchart').offset().top,left:$('div#flowchart').offset().left,'z-index':'-1',display:'block',
+		width:$('div#flowchart').width()+'px',height:$('div#flowchart').height()+'px'
+	});
+	$('input[name="newItemType"]').first().click();
+	outputSVG();
+});
+</script>
+</head>
+<body>
+<h1>SVG Flowchart</h1>
+<h2>Edit</h2>
+<menu id="addItemType">
+	<li><label><input type="radio" name="newItemType" value="textbox"/>Text Box</label></li>
+	<li><label><input type="radio" name="newItemType" value="link"/>Link</label></li>
+	<li><label><input type="radio" name="newItemType" value="select"/>Item Select</label></li>
+</menu>
+<menu id="elementStyling"></menu>
+<div id="flowchart" spellcheck="true"></div>
+<svg id="background" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1"></svg>
+<code id="codeSVG" contenteditable="false" spellcheck="false"></code>
+<h2>Results</h2>
+<svg id="output" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1"></svg>
+</body>
+</html>
