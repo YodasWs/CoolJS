@@ -111,8 +111,7 @@ $(document).ready(function() {
 	});
 	$('[draggable=true]').each(function(i) {
 		if ($(this).attr('id') == null) $(this).attr('id', 'drag' + i);
-		if (this.addEventListener) this.addEventListener('dragstart', pickUpObj);
-		if (this.addEvent) this.attachEvent('dragstart', pickUpObj);
+		$(this).bind('dragstart', pickUpObj).bind('dragend', cancel);
 	});
 });
 function resize(animate, callback) {
