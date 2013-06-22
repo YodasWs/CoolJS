@@ -3,6 +3,8 @@ CoolJS
 
 Some fun JavaScript projects of mine.
 
+You can see the pages working in your browser [here](http://yodasws.github.io/CoolJS/)
+
 ## Fireworks
 
 Using HTML5 Canvas to give a beautiful fireworks show!
@@ -26,3 +28,10 @@ A Pinterest-inspired layout of images, but with HTML5 drag and drop!
 * Chrome 24+
 * Firefox 11+
 * IE8+
+
+## SVG Animation
+
+A test with SVG Animation using SMIL and JavaScript.
+
+### Known Browser Support
+* Chrome 24+
