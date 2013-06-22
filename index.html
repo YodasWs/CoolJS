@@ -13,22 +13,43 @@ a:hover, a:active {
 nav {
 	display: block; margin: 1em auto; max-width: 200px;
 }
-nav > a {
-	display: block; min-width: 100px; padding: 0 5px; margin: 5px 0; line-height: 2em;
-	overflow: hidden; white-space: nowrap; border: 1px solid black;
+nav > li {
+	display: block; min-width: 100px; padding: 0; margin: 5px 0; border: 1px solid black;
 }
-nav > a:hover {
+nav > li:hover {
 	border: 1px solid dodgerblue;
 }
+nav > li > a {
+	display: block; width: 100%; margin: 0; padding: 2px 5px; line-height: 2em;
+	overflow: hidden; white-space: nowrap;
+}
+nav > li > div {
+	margin: 0 5px 2px; font-size: smaller;
+}
 </style>
+<!--[if lt IE 9]><script type="text/javascript" src="http://yodas.ws/api/html5shiv.js"></script><![endif]-->
 <script type="text/javascript">
 </script>
 </head>
 <body>
 <h1>CoolJS</h1>
 <nav>
-<a href="flowchart.html">Flowchart</a>
-<a href="fireworks.html">Fireworks</a>
+<li>
+	<a href="flowchart.html">Flowchart</a>
+	<div>Web-based GUI to build a flowchart and export to SVG.</div>
+</li>
+<li>
+	<a href="fireworks.html">Fireworks</a>
+	<div>Utilizing HTML5 Canvas for an animated fireworks display.</div>
+</li>
+<li>
+	<a href="pins.html">Animated Pins</a>
+	<div>A Pinterest-inspired layout of images with HTML5 Drag and Drop.</div>
+</li>
+<li>
+	<a href="svganimation.php">Animated SVG Test</a>
+	<div>Testing SVG Animation with SMIL</div>
+</li>
 </nav>
 </body>
 </html>
