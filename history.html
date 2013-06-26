@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>History API</title>
+<style type="text/css">
+h1 { text-align: center; }
+</style>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.23/jquery-ui.min.js"></script>
+<script type="text/javascript">
+var changePage = function(link) {
+	switch (link) {
+	case '/more_history.php':
+		window.title = 'More History!';
+		$('h1').html('More History!');
+		$('a').html('Less History').attr('href', '/less_history.php');
+		break;
+	case '/less_history.php':
+		window.title = 'Less History?';
+		$('h1').html('Less History?');
+		$('a').html('History').attr('href', '/history.php');
+		break;
+	default:
+		window.title = 'History';
+		$('h1').html('History');
+		$('a').html('More History').attr('href', '/more_history.php');
+	}
+};
+$(document).ready(function() {
+	changePage(location.pathname);
+	$('a').bind('click', function(e) {
+		history.pushState(null, null, $(this).attr('href'));
+		e.preventDefault();
+		changePage(location.pathname);
+	});
+	$(window).bind('popstate', function() {
+		changePage(location.pathname);
+	});
+});
+</script>
+</head>
+<body>
+<h1>History API</h1>
+<a href="/more_history.php">More History</a>
+</body>
+</html>
