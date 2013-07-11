@@ -66,7 +66,7 @@ var outputSVG = function() {
 			// Adjust Coloring
 			'fill':html.css('background-color'),
 			'stroke':html.css('border-color'),
-			'stroke-width':parseInt(html.css('border-width'), 10),
+			'stroke-width':Math.ceil(parseFloat(html.css('border-width'))),
 			// Match Location
 			'x':'-'+parseInt(html.css('padding-left'), 10),
 			'y':'-'+parseInt(html.css('padding-top'), 10)
@@ -84,6 +84,9 @@ var outputSVG = function() {
 				19
 			) + parseInt(html.css('padding-top'), 10) + parseInt(html.css('padding-bottom'), 10);
 			$(this).attr({
+				'fill':html.css('background-color'),
+				'stroke':html.css('border-color'),
+				'stroke-width':Math.ceil(parseFloat(html.css('border-width'))),
 				'cx':width/2 - parseInt(html.css('padding-left'), 10),
 				'rx':width/2,
 				'cy':height/2 - parseInt(html.css('padding-top'), 10),
