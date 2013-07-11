@@ -7,13 +7,13 @@ You can see the pages working in your browser [here](http://yodasws.github.io/Co
 
 ## History API Test
 
-*history.html*
+**history.html**
 
 A test of the HTML5 History API.
 
 ## Fireworks
 
-*fireworks.html*
+**fireworks.html**
 
 Using HTML5 Canvas to give a beautiful fireworks show!
 
@@ -23,16 +23,37 @@ Using HTML5 Canvas to give a beautiful fireworks show!
 
 ## FlowchartSVG
 
-*flowchart.html*
+**flowchart.html**
 
-Work to build an GUI web page to build a flowchart exported to SVG.
+A web app to build and edit flowcharts and export in SVG
+
+[See the page in action!](http://yodasws.github.io/CoolJS/flowchart.html)
+
+This project is still in its infancy. Please be kind.
+
+### Features
+
+You can add rectangular and elliptical text boxes and then add links between the boxes. If you don't like where you placed a box, just drag and drop it into a new place!
+
+Currently everything is in black and white and angular. More features and options to come!
+
+### Desired Features
+
+* Text Boxes
+ * Set colors: border, background, text color
+ * Set padding, width, height
+ * Add rounded corners
+* Links
+ * Set color
+ * Allow curves
+ * Add arrows at ends
 
 ### Known Browser Support
 * Chrome 24+
 
 ## Pins
 
-*pins.html*
+**pins.html**
 
 A Pinterest-inspired layout of images, but with HTML5 drag and drop!
 
@@ -43,7 +64,7 @@ A Pinterest-inspired layout of images, but with HTML5 drag and drop!
 
 ## SVG Animation
 
-*svganimation.html*
+**svganimation.html**
 
 A test with SVG Animation using SMIL and JavaScript.
 
@@ -52,7 +73,7 @@ A test with SVG Animation using SMIL and JavaScript.
 
 ## Bézier Curve
 
-*besier.html*
+**besier.html**
 
 SVG plus HTML5 Drag and Drop to show the resulting cubic bézier curve when altering the control points.
 The bézier curve's end points have been anchored to show the resulting time function for SVG Animations.
