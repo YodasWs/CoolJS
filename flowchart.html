@@ -5,7 +5,7 @@
 <style type="text/css">
 h1, h2 { text-align: center; }
 code#codeSVG {
-	display: block; max-width: 800px; padding: 5px 10px; margin: 1em auto;
+	display: block; max-width: 800px; padding: 5px 10px; margin: 1em auto;
 	white-space: pre-line; border: 1px solid black;
 }
 div#flowchart { position: relative; }
@@ -28,13 +28,29 @@ menu label {
 </style>
 <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
 <script type="text/javascript">
+var cancel = function(event) {
+	if (event.preventDefault) event.preventDefault();
+	if (event.stopPropagation) event.stopPropagation();
+	return false;
+};
+(function($) {
+	// HTML5 Drag and Drop, data on dragged element
+	$.objDragging = {
+		'id':'',
+		'offset':{'top':0,'left':0}
+	};
+})(jQuery);
 var outputSVG = function() {
-	// Match SVG to HTML/CSS
-	$('svg#output g').each(function() {
+	// Match SVG to HTML/CSS
+	$('svg#output > g[id^="svgRect_"]').each(function() {
 		if (!$(this).attr('id') || $(this).attr('id') == '') return false;
 		var id = parseInt($(this).attr('id').substring($(this).attr('id').indexOf('_')+1), 10);
 		var text = $(this).find('text');
 		var html = $('div#htmlRect_' + id);
+		$(this).attr('transform', 'translate(' +
+			(html.offset().left - $('div#flowchart').offset().left) + ',' +
+			(html.offset().top - $('div#flowchart').offset().top) +
+		')')
 		$(this).find('rect').first().attr({
 			// Adjust Size to Fit Text
 			'width':Math.max(
@@ -50,7 +66,8 @@ var outputSVG = function() {
 			// Adjust Coloring
 			'fill':html.css('background-color'),
 			'stroke':html.css('border-color'),
-			'stroke-width':parseFloat(html.css('border-width')),
+			'stroke-width':parseInt(html.css('border-width'), 10),
+			// Match Location
 			'x':'-'+parseInt(html.css('padding-left'), 10),
 			'y':'-'+parseInt(html.css('padding-top'), 10)
 		});
@@ -65,7 +82,6 @@ var outputSVG = function() {
 				parseInt(html.css('font-size'), 10),
 				text.height(),
 				19
-
 			) + parseInt(html.css('padding-top'), 10) + parseInt(html.css('padding-bottom'), 10);
 			$(this).attr({
 				'cx':width/2 - parseInt(html.css('padding-left'), 10),
@@ -171,9 +187,7 @@ var outputSVG = function() {
 
 	// Display XML
 	xml = xml.replace(/[.\n]*<svg(.*?)>\s*/g, "<svg$1>\n");
-	xml = xml.replace(/<\/g>\s*/g, "</g>\n");
-	xml = xml.replace(/<path(.*?)\/?>(<\/path>)?\s*/g, "<path$1/>\n");
-	xml = xml.replace(/<rect(.*?)\/?>(<\/rect>)?\s*/g, "<rect$1/>\n");
+	xml = xml.replace(/<\/(\w*)>\s*/g, "</$1>\n");
 	$('code#codeSVG').text("<\?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + xml);
 }
 var updateSVG = function() {
@@ -193,6 +207,7 @@ var objFlowChart = {
 	arrLinks:[]
 };
 var activateTools = function() {
+	if (this != window && !$(this).is(':checked')) return false;
 	// Clear Last Tool
 	objFlowChart.eleActive = null;
 	$('div#flowchart > div[id^="htmlRect_"]').css({outline:''});
@@ -220,23 +235,22 @@ var activateTools = function() {
 	}
 
 	// Make Text Boxes Editable
-	if ($.inArray($('input[name="newItemType"]:checked').attr('value'), ['textbox','select']) != -1) {
+	if ($.inArray($('input[name="newItemType"]:checked').attr('value'), ['textbox']) != -1) {
 		$('div#flowchart > div[id^="htmlRect_"]').attr('contenteditable','true');
 	} else {
 		$('div#flowchart > div[id^="htmlRect_"]').attr('contenteditable','false');
 	}
 
-	// Set Text Box Interaction
+	// Set Text Box Interaction
 	$('div#flowchart > div[id^="htmlRect_"]').unbind('click').click(function() {
-		switch ($('input[name="newItemType"]:checked').attr('value')) {
-		case 'textbox':
-		case 'select':
-			// Contenteditable = true, prevent default behavior and stop bubbling
-			return false;
-		case 'link': // Linking Boxes
-			$('div#flowchart > div[id^="htmlRect_"]').css({outline:'0 none'});
-			if (!objFlowChart.eleActive) {
-				// Set as Active Element
+		switch ($('input[name="newItemType"]:checked').attr('value')) {
+		case 'textbox':
+			// Contenteditable = true, prevent default behavior and stop bubbling
+			return false;
+		case 'link': // Linking Boxes
+			$('div#flowchart > div[id^="htmlRect_"]').css({outline:'0 none'});
+			if (!objFlowChart.eleActive) {
+				// Set as Active Element
 				objFlowChart.eleActive = this;
 				$(this).css({outline:'1px solid dodgerblue'});
 			} else {
@@ -255,11 +269,11 @@ var activateTools = function() {
 			}
 			return false;
 		}
-	}).unbind('keyup').keyup(function(event) {
-		switch ($('input[name="newItemType"]:checked').attr('value')) {
-		case 'textbox':
-		case 'select':
-			$('#svgRect_' + $(this).data('rect')).find('text').text($(this).text());
+		return true;
+	}).unbind('keyup').bind('keyup', function(event) {
+		switch ($('input[name="newItemType"]:checked').attr('value')) {
+		case 'textbox':
+			$('#svgRect_' + $(this).data('rect')).find('text').text($(this).text());
 			if ($(this).text() == '' && event.keyCode == 46) { // delete
 				$('#svgRect_' + $(this).data('rect')).remove();
 				$(this).remove();
@@ -268,9 +282,94 @@ var activateTools = function() {
 			break;
 		}
 	});
+	if ($('input[name="newItemType"]:checked').attr('value') == 'select') {
+		// Define Start Drag
+		var dragBox = function(event) {
+			$.objDragging.id = event.target.getAttribute('id');
+			$.objDragging.offset.left = event.pageX - $(event.target).offset().left;
+			$.objDragging.offset.top = event.pageY - $(event.target).offset().top;
+		};
+		// Clear stored data
+		var forgetBox = function(event) {
+			$.objDragging.id = null;
+			$.objDragging.offset.left = null;
+			$.objDragging.offset.top = null;
+		};
+		// Set Drag Over Behavior
+		var moveBox = function(event) {
+			if ($.objDragging.id.indexOf('htmlRect_') == 0)
+				$('#' + $.objDragging.id).css({
+					top:(event.pageY - $.objDragging.offset.top - $(event.target).offset().top),
+					left:(event.pageX - $.objDragging.offset.left - $(event.target).offset().left)
+				});
+			else if ($.objDragging.id.indexOf('svgRect_') == 0)
+				$('#' + $.objDragging.id.replace('svg', 'html')).css({
+					top:(event.pageY - $.objDragging.offset.top - $(event.target).offset().top),
+					left:(event.pageX - $.objDragging.offset.left - $(event.target).offset().left)
+				});
+			outputSVG();
+			return false;
+		};
+		// Define Drop
+		var dropBox = function(event) {
+			if ($.objDragging.id.indexOf('htmlRect_') == 0)
+				$('#' + $.objDragging.id).css({
+					top:(event.pageY - $.objDragging.offset.top - $(event.target).offset().top),
+					left:(event.pageX - $.objDragging.offset.left - $(event.target).offset().left)
+				});
+			else if ($.objDragging.id.indexOf('svgRect_') == 0)
+				$('#' + $.objDragging.id.replace('svg', 'html')).css({
+					top:(event.pageY - $.objDragging.offset.top - $(event.target).offset().top),
+					left:(event.pageX - $.objDragging.offset.left - $(event.target).offset().left)
+				});
+			outputSVG();
+			return false;
+		};
+		$('div#flowchart > div[id^="htmlRect_"], svg#output > g[id^="svgRect_"]').css({
+			// Set Required CSS
+			'-khtml-user-drag':'element','-webkit-user-drag':'element',
+			'-webkit-user-select':'none','-moz-user-select':'-moz-element','-ms-user-select':'element','user-select':'element',
+			'cursor':'move'//,'cursor':'-webkit-grab','cursor':'-moz-grab','cursor':'grab'
+		}).attr('draggable','true').each(function() {
+			// Enable Drag
+			if (this.addEvent) this.addEvent('dragstart', dragBox);
+			if (this.addEventListener) this.addEventListener('dragstart', dragBox);
+			if (this.addEvent) this.addEvent('dragend', forgetBox);
+			if (this.addEventListener) this.addEventListener('dragend', forgetBox);
+		});
+		// Enable Drop
+		$('div#flowchart, svg#output').addClass('dropzone').each(function() {
+			if (this.addEvent) this.addEvent('drop', dropBox);
+			if (this.addEventListener) this.addEventListener('drop', dropBox);
+			if (this.addEvent) this.addEvent('dragover', moveBox);
+			if (this.addEventListener) this.addEventListener('dragover', moveBox);
+			if (this.addEvent) this.addEvent('dragenter', moveBox);
+			if (this.addEventListener) this.addEventListener('dragenter', moveBox);
+		});
+	} else {
+		// Disable Drag and Drop
+		$('div#flowchart, svg#output').removeClass('dropzone').each(function() {
+			if (this.detachEvent) this.detachEvent('ondrop', dropBox);
+			if (this.removeEventListener) this.removeEventListener('drop', dropBox);
+			if (this.detachEvent) this.detachEvent('ondragover', moveBox);
+			if (this.removeEventListener) this.removeEventListener('dragover', moveBox);
+			if (this.detachEvent) this.detachEvent('ondragenter', moveBox);
+			if (this.removeEventListener) this.removeEventListener('dragenter', moveBox);
+		});
+		$('div#flowchart > div[id^="htmlRect_"], svg#output > g[id^="svgRect_"]').css({
+			'-khtml-user-drag':'none','-webkit-user-drag':'none',
+			'-webkit-user-select':'text','-moz-user-select':'-moz-text','-ms-user-select':'text','user-select':'text',
+			'cursor':'auto'
+		}).attr('draggable','false').each(function() {
+			if (this.detachEvent) this.detachEvent('dragstart', dragBox);
+			if (this.removeEventListener) this.removeEventListener('dragstart', dragBox);
+			if (this.detachEvent) this.detachEvent('dragend', forgetBox);
+			if (this.removeEventListener) this.removeEventListener('dragend', forgetBox);
+		});
+	}
 };
 $(document).ready(function() {
-	$('svg').attr('viewBox', '0 0 ' + $('div#flowchart').width() + ' ' + $('div#flowchart').height());
+	$('svg').attr('viewBox', '0 0 ' + $('div#flowchart').width() + ' ' +$('div#flowchart').height());
 	$('code#codeSVG').keyup(function(e) {
 		switch (e.keyCode) {
 		case 16: // shift
@@ -282,7 +381,7 @@ $(document).ready(function() {
 			break;
 		default:
 			updateSVG();
-		} else switch (e.keyCode) {
+		} else switch (e.keyCode) {
 		default:
 			updateSVG();
 		}
@@ -293,16 +392,17 @@ $(document).ready(function() {
 	switch ($('input[name="newItemType"]:checked').attr('value')) {
 	case 'textbox':
 		var intRect = objFlowChart.intMaxBoxNum++;
+
 		// Add New Text Box
 		var newRect = $('<div contenteditable="true">').css({
 			'min-width':'100px','min-height':'20px',border:'1px solid black',position:'absolute',padding:'2px 5px',
 			left:event.pageX-5,top:event.pageY-10
 		}).attr('id', 'htmlRect_' + intRect).data({
-
 			'shape':$('input[name="boxShape"]:checked').val(),
 			'rect':intRect
 		});
 		$(this).append(newRect);
+
 		// Properly Place Box at Cursor
 		$(newRect).focus().parents().each(function() {
 			if ($.inArray($(this).css('position'), ['relative','absolute']) > -1) {
@@ -312,22 +412,22 @@ $(document).ready(function() {
 				});
 			}
 		});
+
 		// Have HTML Box Match Desired Shape
 		switch ($('input[name="boxShape"]:checked').val()) {
 		case 'ellipse':
 			$(newRect).css({'border-radius':'100%'});
 			break;
-
 		case 'rect':
 			$(newRect).css({'border-radius':'0'});
 			break;
 		}
-		// Add to SVG
+
+		var svgNewRect = '';
+
 		// Build SVG
 		switch ($('input[name="boxShape"]:checked').val()) {
-
 		case 'ellipse':
-
 			svgNewRect = '<ellipse rx="5" ry="7" cx="5" cy="7" ' +
 				'style="stroke:black;stroke-width:1;fill:white"' +
 				'/>';
@@ -338,11 +438,10 @@ $(document).ready(function() {
 				'/>';
 			break;
 		}
+
 		// Output SVG
 		$('svg#output').append(
-			$('<g>').attr('id', 'svgRect_' + intRect).append(svgNewRect).append('<text y="14">').attr('transform', 'translate(' +
-				(newRect.offset().left - $('div#flowchart').offset().left) + ',' +
-				(newRect.offset().top - $('div#flowchart').offset().top) + ')')
+			$('<g>').attr('id', 'svgRect_' + intRect).append(svgNewRect).append('<text y="14">')
 		);
 		activateTools();
 		outputSVG();
@@ -354,12 +453,11 @@ $(document).ready(function() {
 		}
 		return false;
 	}});
-	$('input[name="newItemType"]').change(activateTools);
+	$('input[name="newItemType"]').change(activateTools).first().click();
 	$('svg#background').css({
 		position:'absolute',top:$('div#flowchart').offset().top,left:$('div#flowchart').offset().left,'z-index':'-1',display:'block',
 		width:$('div#flowchart').width()+'px',height:$('div#flowchart').height()+'px'
 	});
-	$('input[name="newItemType"]').first().click();
 	outputSVG();
 });
 </script>
