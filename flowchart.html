@@ -5,11 +5,11 @@
 <style type="text/css">
 h1, h2 { text-align: center; }
 code#codeSVG {
-	display: block; max-width: 800px; padding: 5px 10px; margin: 1em auto;
+	display: block; max-width: 800px; padding: 5px 10px; margin: 1em auto;
 	white-space: pre-line; border: 1px solid black;
 }
 div#flowchart { position: relative; }
-div#flowchart, svg#output {
+div#flowchart, svg#output {
 	display: block; border: 1px solid black; margin: 1em auto;
 	width: 800px; height: 500px; overflow: hidden;
 }
@@ -241,6 +241,8 @@ var activateTools = function() {
 			'<li><label><input type="radio" name="boxShape" value="rect" checked />Rectangle'
 		).append(
 			'<li><label><input type="radio" name="boxShape" value="ellipse" />Ellipse'
+		).append(
+			'<li><label>Border: <input type="color" name="boxBorder" placeholder="color" value="#000000" />'
 		).show();
 		break;
 	case 'link':
@@ -418,7 +420,8 @@ $(document).ready(function() {
 
 		// Add New Text Box
 		var newRect = $('<div contenteditable="true">').css({
-			'min-width':'100px','min-height':'20px',border:'1px solid black',position:'absolute',padding:'2px 5px',
+			'min-width':'100px','min-height':'20px',position:'absolute',padding:'2px 5px',
+			border:'1px solid ' + $('input[name="boxBorder"]').val(),
 			left:event.pageX-5,top:event.pageY-10
 		}).attr('id', 'htmlRect_' + intRect).data({
 			'shape':$('input[name="boxShape"]:checked').val(),
@@ -451,14 +454,10 @@ $(document).ready(function() {
 		// Build SVG
 		switch ($('input[name="boxShape"]:checked').val()) {
 		case 'ellipse':
-			svgNewRect = '<ellipse rx="5" ry="7" cx="5" cy="7" ' +
-				'style="stroke:black;stroke-width:1;fill:white"' +
-				'/>';
+			svgNewRect = '<ellipse rx="5" ry="7" cx="5" cy="7" />';
 			break;
 		case 'rect':
-			svgNewRect = '<rect width="10" height="14" ' +
-				'stroke="black" stroke-width="1" fill="white"' +
-				'/>';
+			svgNewRect = '<rect width="10" height="14" />';
 			break;
 		}
 
