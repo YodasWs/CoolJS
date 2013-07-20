@@ -5,11 +5,11 @@
 <style type="text/css">
 h1, h2 { text-align: center; }
 code#codeSVG {
-	display: block; max-width: 800px; padding: 5px 10px; margin: 1em auto;
+	display: block; max-width: 800px; padding: 5px 10px; margin: 1em auto;
 	white-space: pre-line; border: 1px solid black;
 }
 div#flowchart { position: relative; }
-div#flowchart, svg#output {
+div#flowchart, svg#output {
 	display: block; border: 1px solid black; margin: 1em auto;
 	width: 800px; height: 500px; overflow: hidden;
 }
@@ -84,13 +84,15 @@ var outputSVG = function() {
 				19
 			) + parseInt(html.css('padding-top'), 10) + parseInt(html.css('padding-bottom'), 10);
 			$(this).attr({
-				'fill':html.css('background-color'),
-				'stroke':html.css('border-color'),
-				'stroke-width':Math.ceil(parseFloat(html.css('border-width'))),
+				// Match Location
 				'cx':width/2 - parseInt(html.css('padding-left'), 10),
 				'rx':width/2,
 				'cy':height/2 - parseInt(html.css('padding-top'), 10),
-				'ry':height/2
+				'ry':height/2,
+				// Adjust Coloring
+				'fill':html.css('background-color'),
+				'stroke':html.css('border-color'),
+				'stroke-width':Math.ceil(parseFloat(html.css('border-width')))
 			});
 		});
 	});
@@ -207,13 +209,30 @@ var updateSVG = function() {
 var objFlowChart = {
 	intMaxBoxNum:0,
 	eleActive:null,
-	arrLinks:[]
+	arrLinks:[],
+	clearActiveBox:function() {
+		this.eleActive = null;
+		$('div#flowchart > div[id^="htmlRect_"]').css({outline:''});
+	},
+	setActiveBox:function(box) {
+		switch($.type(box)) {
+		case 'number':
+		case 'string':
+			if ($('div#flowchart > div#htmlRect_' + box).length > 0)
+				box = $('div#flowchart > div#htmlRect_' + box);
+			break;
+		case 'object':
+			box = $(box);
+			break;
+		}
+		var set = ($(this.eleActive).attr('id') == $(box).attr('id')) ? false : true;
+		this.clearActiveBox();
+		if (set && $.type(box) == 'object') this.eleActive = box.css({outline:'1px solid dodgerblue'}).get(0);
+	}
 };
 var activateTools = function() {
 	if (this != window && !$(this).is(':checked')) return false;
-	// Clear Last Tool
-	objFlowChart.eleActive = null;
-	$('div#flowchart > div[id^="htmlRect_"]').css({outline:''});
+	objFlowChart.clearActiveBox();
 
 	// Set Environment for Selected Tool
 	switch ($('input[name="newItemType"]:checked').attr('value')) {
@@ -251,15 +270,13 @@ var activateTools = function() {
 			// Contenteditable = true, prevent default behavior and stop bubbling
 			return false;
 		case 'link': // Linking Boxes
-			$('div#flowchart > div[id^="htmlRect_"]').css({outline:'0 none'});
 			if (!objFlowChart.eleActive) {
 				// Set as Active Element
-				objFlowChart.eleActive = this;
-				$(this).css({outline:'1px solid dodgerblue'});
+				objFlowChart.setActiveBox(this);
 			} else {
 				var a = Math.min($(objFlowChart.eleActive).data('rect'),$(this).data('rect'));
 				var b = Math.max($(objFlowChart.eleActive).data('rect'),$(this).data('rect'));
-				objFlowChart.eleActive = null;
+				objFlowChart.clearActiveBox();
 				if (a == b) return false;
 				// Check for Active Link
 				for (var i in objFlowChart.arrLinks)
@@ -270,6 +287,9 @@ var activateTools = function() {
 				});
 				outputSVG();
 			}
+			return false;
+		case 'select':
+			objFlowChart.setActiveBox(this);
 			return false;
 		}
 		return true;
@@ -372,7 +392,7 @@ var activateTools = function() {
 	}
 };
 $(document).ready(function() {
-	$('svg').attr('viewBox', '0 0 ' + $('div#flowchart').width() + ' ' +$('div#flowchart').height());
+	$('svg').attr('viewBox', '0 0 ' + $('div#flowchart').width() + ' ' + $('div#flowchart').height());
 	$('code#codeSVG').keyup(function(e) {
 		switch (e.keyCode) {
 		case 16: // shift
@@ -449,10 +469,11 @@ $(document).ready(function() {
 		activateTools();
 		outputSVG();
 		return false;
+	case 'select':
 	case 'link':
+		// Clear Active Box and Do Nothing
 		if ($(event.target).attr('id') == 'flowchart') {
-			$('div#flowchart > div[id^="htmlRect_"]').css({outline:'0 none'});
-			objFlowChart.eleActive = null;
+			objFlowChart.clearActiveBox();
 		}
 		return false;
 	}});
