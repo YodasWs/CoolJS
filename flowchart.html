@@ -33,6 +33,25 @@ var cancel = function(event) {
 	if (event.stopPropagation) event.stopPropagation();
 	return false;
 };
+var validateColor = function(color, html) {
+	color = color.replace(/\s/g, '');
+	// Hex
+	if (/^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.test(color))
+		return color.replace(/^#?/i, "#");
+	// RGB/HSL
+	if (/^(rgb|hsl)a?\(\d{1,3}%?,\d{1,3}%?,\d{1,3}%?\)$/i.test(color))
+		return color.replace('a','');
+	// RGBA/HSLA
+	if (/^(rgb|hsl)a\(\d{1,3}%?,\d{1,3}%?,\d{1,3}%?,(0|0?\.\d+\|1)\)$/i.test(color))
+		return color;
+	switch (color) {
+	case 'transparent':
+		if (!html) return 'none';
+		return 'transparent';
+	}
+	// Default Color
+	return 'black';
+};
 (function($) {
 	// HTML5 Drag and Drop, data on dragged element
 	$.objDragging = {
@@ -64,8 +83,8 @@ var outputSVG = function() {
 				19
 			) + parseInt(html.css('padding-top'), 10) + parseInt(html.css('padding-top'), 10),
 			// Adjust Coloring
-			'fill':html.css('background-color'),
-			'stroke':html.css('border-color'),
+			'fill':validateColor(html.css('background-color')),
+			'stroke':validateColor(html.css('border-color')),
 			'stroke-width':Math.ceil(parseFloat(html.css('border-width'))),
 			// Match Location
 			'x':'-'+parseInt(html.css('padding-left'), 10),
@@ -90,8 +109,8 @@ var outputSVG = function() {
 				'cy':height/2 - parseInt(html.css('padding-top'), 10),
 				'ry':height/2,
 				// Adjust Coloring
-				'fill':html.css('background-color'),
-				'stroke':html.css('border-color'),
+				'fill':validateColor(html.css('background-color')),
+				'stroke':validateColor(html.css('border-color')),
 				'stroke-width':Math.ceil(parseFloat(html.css('border-width')))
 			});
 		});
@@ -242,7 +261,13 @@ var activateTools = function() {
 		).append(
 			'<li><label><input type="radio" name="boxShape" value="ellipse" />Ellipse'
 		).append(
-			'<li><label>Border: <input type="color" name="boxBorder" placeholder="color" value="#000000" />'
+			'<li>Border: <input type="color" name="boxBorder[color]" placeholder="color" value="#000000" />'
++'<ul>'
++'<li><label><input type="radio" name="boxBorder[width]" value="0px" />None</label></li>'
++'<li><label><input type="radio" name="boxBorder[width]" value="1px" checked />1px</label></li>'
++'<li><label><input type="radio" name="boxBorder[width]" value="2px" />2px</label></li>'
++'<li><label><input type="radio" name="boxBorder[width]" value="3px" />3px</label></li>'
++'</ul>'
 		).show();
 		break;
 	case 'link':
@@ -421,8 +446,8 @@ $(document).ready(function() {
 		// Add New Text Box
 		var newRect = $('<div contenteditable="true">').css({
 			'min-width':'100px','min-height':'20px',position:'absolute',padding:'2px 5px',
-			border:'1px solid ' + $('input[name="boxBorder"]').val(),
-			left:event.pageX-5,top:event.pageY-10
+			border:$('input[name="boxBorder[width]"]:checked').val() + ' solid ' + validateColor($('input[name="boxBorder[color]"]').val(), true),
+			'background-color':'transparent',left:event.pageX-5,top:event.pageY-10
 		}).attr('id', 'htmlRect_' + intRect).data({
 			'shape':$('input[name="boxShape"]:checked').val(),
 			'rect':intRect
