@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Custom Select Field</title>
+<meta charset="utf-8" />
+<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js" type="text/javascript"></script>
+<script type="text/javascript">
+if (!window.jQuery) document.write('<script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js" type="text/javascript"><\/script>');
+</script>
+<style type="text/css">
+h1 { text-align: center; }
+input[type="text"] {
+	padding: 2px 5px; background: white;
+	border: 1px outset grey; box-shadow: 1px 1px 2px dimgrey;
+	-webkit-transition: box-shadow .8s;
+	-moz-transition: box-shadow .8s;
+	-ms-transition: box-shadow .8s;
+	-o-transition: box-shadow .8s;
+	transition: box-shadow .8s;
+}
+input[type="text"]:hover {
+	box-shadow: 5px 5px 5px white;
+}
+input[type="text"]:focus, input[type="text"]:active {
+	outline: 0 none; box-shadow: 10px 10px 2px lightgrey;
+}
+ul.datalist {
+	list-style: none; background: white;
+	box-shadow: 2px 2px 5px grey; padding: 0;
+border: 1px solid green;
+}
+ul.datalist > li {
+	padding: 2px 5px;
+}
+ul.datalist:not(:hover) > li[selected], ul.datalist > li:hover {
+	background: lightblue;
+}
+ul.datalist > li[selected] {
+	font-weight: bold;
+}
+</style>
+<script type="application/json" id="datalist">
+{'select-list-1':[]}
+</script>
+<script type="text/javascript">
+$(document).ready(function() {
+	$('input[list]').filter(function() {
+		// Check for datalist to modify
+		if ($('ul#' + $(this).attr('list')).length != 1) return false;
+		// Discover location and set CSS
+		var eleThis = $(this);
+		eleThis.css({
+			cursor:'pointer'
+		});
+		// Build datalist menu and set interaction
+		var buildMenu = function() {
+			// Move for easy CSS placement
+			$('ul#' + eleThis.attr('list')).appendTo('body').addClass('datalist').css({
+				// Set basic CSS
+				display:'none',margin:'0',position:'absolute',opacity:1,'min-width':eleThis.outerWidth(),
+				top:eleThis.offset().top+eleThis.outerHeight()+'px',left:eleThis.offset().left+'px',width:'auto',
+				'-webkit-box-sizing':'border-box','-moz-box-sizing':'border-box','box-sizing':'border-box'
+			}).children('li').css({
+				// Let users now they can click
+				cursor:'pointer'
+			}).click(function() {
+				// Set input value
+				var list = $(this).closest('ul[id].datalist').attr('id');
+				var value = $(this).text();
+				$('input[list="'+list+'"]').attr('value',value);
+				// Set selected attribute
+				$(this).closest('ul.datalist').find('li').removeAttr('selected');
+				$(this).attr('selected','selected');
+			}).filter('[selected]').last().click();
+			// Find width of datalist
+			var width = $('ul#' + eleThis.attr('list')).show().outerWidth();
+			$('ul#' + eleThis.attr('list')).hide();
+			eleThis.css({
+				// You know you like it
+				'-webkit-box-sizing':'border-box','-moz-box-sizing':'border-box','box-sizing':'border-box'
+			}).animate({
+				// Expand to datalist width
+				width:width
+			}, 'slow', function() {
+				// Set this as datalist's width
+				$('ul#' + eleThis.attr('list')).css({
+					'width':eleThis.outerWidth()
+				});
+			});
+		};
+		// Save default height for animations
+		if ($('ul#' + eleThis.attr('list')).css('height'))
+			$('ul#' + eleThis.attr('list')).data('list-height', $('ul#' + eleThis.attr('list')).css('height'));
+		else
+			$('ul#' + eleThis.attr('list')).data('list-height', 'auto');
+		if ($('ul#' + $(this).attr('list')).is(':visible'))
+			// Animate list disappearance on page load
+			$('ul#' + $(this).attr('list')).animate({
+				opacity:0,height:0,width:0
+			}, 'fast', function() {
+				var list = $(this).attr('id');
+				buildMenu();
+			});
+		else buildMenu();
+		return true;
+	}).attr('readonly','readonly').focus(function() {
+		// Show datalist menu
+		var height = $('ul#' + $(this).attr('list')).data('list-height');
+		if (height == 'auto')
+			height = $('ul#' + $(this).attr('list')).show().height();
+		$('ul#' + $(this).attr('list')).css({
+			top:$(this).offset().top+$(this).outerHeight()+'px',left:$(this).offset().left+'px',
+			height:'0px',overflow:'hidden',display:'block'
+		}).stop(true,true).animate({
+			height:height
+		}, 'slow', function() {
+			$(this).css({
+				height:$(this).data('height')
+			}).show();
+		});
+	}).blur(function() {
+		// Hide datalist menu
+		$('ul#' + $(this).attr('list')).stop(true,true).animate({
+			height:'0px'
+		}, 'slow', function() {
+			$(this).hide();
+		});
+	});
+});
+</script>
+</head>
+<body>
+<h1>Custom Select Field</h1>
+<div style="position: relative;border:1px solid red;min-height:100px">
+	<input type="text" list="select-list-1" style="position:absolute;right:1em;bottom:1em" />
+	<ul class="datalist" id="select-list-1">
+		<li>IE10</li>
+		<li selected>Chrome</li>
+		<li>Firefox</li>
+		<li>FirefoxFirefoxFirefoxFirefoxFirefoxFirefoxFirefoxFirefoxFirefoxFirefox</li>
+	</ul>
+</div>
+<select>
+	<option>IE10</option>
+	<option selected>Chrome</option>
+	<option>Firefox</option>
+	<option>FirefoxFirefoxFirefoxFirefoxFirefoxFirefoxFirefoxFirefoxFirefoxFirefox</option>
+</select>
+<output name="value1" for="custom1"></output>
+</body>
+</html>
