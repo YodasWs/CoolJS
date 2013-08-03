@@ -33,6 +33,25 @@ var cancel = function(event) {
 	if (event.stopPropagation) event.stopPropagation();
 	return false;
 };
+var validateColor = function(color, html) {
+	color = color.replace(/\s/g, '');
+	// Hex
+	if (/^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.test(color))
+		return color.replace(/^#?/i, "#");
+	// RGB/HSL
+	if (/^(rgb|hsl)a?\(\d{1,3}%?,\d{1,3}%?,\d{1,3}%?\)$/i.test(color))
+		return color.replace('a','');
+	// RGBA/HSLA
+	if (/^(rgb|hsl)a\(\d{1,3}%?,\d{1,3}%?,\d{1,3}%?,(0|0?\.\d+\|1)\)$/i.test(color))
+		return color;
+	switch (color) {
+	case 'transparent':
+		if (!html) return 'none';
+		return 'transparent';
+	}
+	// Default Color
+	return 'black';
+};
 (function($) {
 	// HTML5 Drag and Drop, data on dragged element
 	$.objDragging = {
@@ -64,8 +83,8 @@ var outputSVG = function() {
 				19
 			) + parseInt(html.css('padding-top'), 10) + parseInt(html.css('padding-top'), 10),
 			// Adjust Coloring
-			'fill':html.css('background-color'),
-			'stroke':html.css('border-color'),
+			'fill':validateColor(html.css('background-color')),
+			'stroke':validateColor(html.css('border-color')),
 			'stroke-width':Math.ceil(parseFloat(html.css('border-width'))),
 			// Match Location
 			'x':'-'+parseInt(html.css('padding-left'), 10),
@@ -84,13 +103,15 @@ var outputSVG = function() {
 				19
 			) + parseInt(html.css('padding-top'), 10) + parseInt(html.css('padding-bottom'), 10);
 			$(this).attr({
-				'fill':html.css('background-color'),
-				'stroke':html.css('border-color'),
-				'stroke-width':Math.ceil(parseFloat(html.css('border-width'))),
+				// Match Location
 				'cx':width/2 - parseInt(html.css('padding-left'), 10),
 				'rx':width/2,
 				'cy':height/2 - parseInt(html.css('padding-top'), 10),
-				'ry':height/2
+				'ry':height/2,
+				// Adjust Coloring
+				'fill':validateColor(html.css('background-color')),
+				'stroke':validateColor(html.css('border-color')),
+				'stroke-width':Math.ceil(parseFloat(html.css('border-width')))
 			});
 		});
 	});
@@ -207,22 +228,89 @@ var updateSVG = function() {
 var objFlowChart = {
 	intMaxBoxNum:0,
 	eleActive:null,
-	arrLinks:[]
+	arrLinks:[],
+	clearActiveBox:function() {
+		this.eleActive = null;
+		$('div#flowchart > div[id^="htmlRect_"]').css({outline:''});
+		// Hide Element Tools
+		switch ($('input[name="newItemType"]:checked').attr('value')) {
+		case 'select':
+			$('#elementStyling').hide().children('input').hide().blur();
+			break;
+		}
+	},
+	setActiveBox:function(box) {
+		switch($.type(box)) {
+		case 'number':
+		case 'string':
+			if ($('div#flowchart > div#htmlRect_' + box).length > 0)
+				box = $('div#flowchart > div#htmlRect_' + box);
+			break;
+		case 'object':
+			box = $(box);
+			break;
+		}
+		var set = ($(this.eleActive).attr('id') == $(box).attr('id')) ? false : true;
+		this.clearActiveBox();
+		if (set && $.type(box) == 'object') {
+			// Display Element Tools
+			switch ($('input[name="newItemType"]:checked').attr('value')) {
+			case 'select':
+				if (box.is('[id^="htmlRect_"]')) {
+					// Set Correct Values
+					$('#elementStyling input[name="boxShape"][value="' + box.data('shape') + '"]').click().show();
+// TODO: Does Chrome Color-picker Require Hex RBG ?
+					$('#elementStyling input[name="boxBorder[color]"]').attr('value',box.css('border-color')).show();
+					$('#elementStyling input[name="boxBorder[width]"][value="' + box.css('border-width') + '"]').click().show();
+					$('#elementStyling').show();
+				}
+				break;
+			}
+			// Activate Element
+			this.eleActive = box.css({outline:'1px solid dodgerblue'}).get(0);
+		}
+	}
 };
 var activateTools = function() {
 	if (this != window && !$(this).is(':checked')) return false;
-	// Clear Last Tool
-	objFlowChart.eleActive = null;
-	$('div#flowchart > div[id^="htmlRect_"]').css({outline:''});
+	objFlowChart.clearActiveBox();
 
 	// Set Environment for Selected Tool
 	switch ($('input[name="newItemType"]:checked').attr('value')) {
 	case 'textbox':
-		$('#elementStyling').html('').append(
-			'<li><label><input type="radio" name="boxShape" value="rect" checked />Rectangle'
-		).append(
-			'<li><label><input type="radio" name="boxShape" value="ellipse" />Ellipse'
-		).show();
+	case 'select':
+		$('#elementStyling').html('').hide().append(
+			// Set Box Shape
+			'<li><label><input type="radio" name="boxShape" value="rect" checked />Rectangle</label></li>'
+			+'<li><label><input type="radio" name="boxShape" value="ellipse" />Ellipse</label></li>'
+	`	).append(
+			// Set Box Border
+// TODO: Use Chrome Color-picker
+			'<li>Border: <input type="text" name="boxBorder[color]" placeholder="color" value="#000000" />'
+			+'<ul>'
+			+	'<li><label><input type="radio" name="boxBorder[width]" value="0px" />None</label></li>'
+			+	'<li><label><input type="radio" name="boxBorder[width]" value="1px" checked />1px</label></li>'
+			+	'<li><label><input type="radio" name="boxBorder[width]" value="2px" />2px</label></li>'
+			+	'<li><label><input type="radio" name="boxBorder[width]" value="3px" />3px</label></li>'
+			+'</ul></li>'
+		);
+		if ($('input[name="newItemType"]:checked').attr('value') == 'textbox')
+			$('#elementStyling').show();
+		if ($('input[name="newItemType"]:checked').attr('value') == 'select') {
+			// TODO: Update Box Design Onchange
+			$('#elementStyling input').change(function() {
+			if (!objFlowChart.eleActive) return false;
+			if ($(this).is(':radio') && !$(this).is('checked'))
+				return true;
+			switch ($(this).attr('name')) {
+			case 'boxShape':
+				break;
+			case 'boxBorder[color]':
+				break;
+			case 'boxBorder[width]':
+				break;
+			}});
+		}
 		break;
 	case 'link':
 		$('#elementStyling').html('').append(
@@ -251,15 +339,13 @@ var activateTools = function() {
 			// Contenteditable = true, prevent default behavior and stop bubbling
 			return false;
 		case 'link': // Linking Boxes
-			$('div#flowchart > div[id^="htmlRect_"]').css({outline:'0 none'});
 			if (!objFlowChart.eleActive) {
 				// Set as Active Element
-				objFlowChart.eleActive = this;
-				$(this).css({outline:'1px solid dodgerblue'});
+				objFlowChart.setActiveBox(this);
 			} else {
 				var a = Math.min($(objFlowChart.eleActive).data('rect'),$(this).data('rect'));
 				var b = Math.max($(objFlowChart.eleActive).data('rect'),$(this).data('rect'));
-				objFlowChart.eleActive = null;
+				objFlowChart.clearActiveBox();
 				if (a == b) return false;
 				// Check for Active Link
 				for (var i in objFlowChart.arrLinks)
@@ -270,6 +356,9 @@ var activateTools = function() {
 				});
 				outputSVG();
 			}
+			return false;
+		case 'select':
+			objFlowChart.setActiveBox(this);
 			return false;
 		}
 		return true;
@@ -372,7 +461,7 @@ var activateTools = function() {
 	}
 };
 $(document).ready(function() {
-	$('svg').attr('viewBox', '0 0 ' + $('div#flowchart').width() + ' ' +$('div#flowchart').height());
+	$('svg').attr('viewBox', '0 0 ' + $('div#flowchart').width() + ' ' + $('div#flowchart').height());
 	$('code#codeSVG').keyup(function(e) {
 		switch (e.keyCode) {
 		case 16: // shift
@@ -398,8 +487,9 @@ $(document).ready(function() {
 
 		// Add New Text Box
 		var newRect = $('<div contenteditable="true">').css({
-			'min-width':'100px','min-height':'20px',border:'1px solid black',position:'absolute',padding:'2px 5px',
-			left:event.pageX-5,top:event.pageY-10
+			'min-width':'100px','min-height':'20px',position:'absolute',padding:'2px 5px',
+			border:$('input[name="boxBorder[width]"]:checked').val() + ' solid ' + validateColor($('input[name="boxBorder[color]"]').val(), true),
+			'background-color':'transparent',left:event.pageX-5,top:event.pageY-10
 		}).attr('id', 'htmlRect_' + intRect).data({
 			'shape':$('input[name="boxShape"]:checked').val(),
 			'rect':intRect
@@ -431,14 +521,10 @@ $(document).ready(function() {
 		// Build SVG
 		switch ($('input[name="boxShape"]:checked').val()) {
 		case 'ellipse':
-			svgNewRect = '<ellipse rx="5" ry="7" cx="5" cy="7" ' +
-				'style="stroke:black;stroke-width:1;fill:white"' +
-				'/>';
+			svgNewRect = '<ellipse rx="5" ry="7" cx="5" cy="7" />';
 			break;
 		case 'rect':
-			svgNewRect = '<rect width="10" height="14" ' +
-				'stroke="black" stroke-width="1" fill="white"' +
-				'/>';
+			svgNewRect = '<rect width="10" height="14" />';
 			break;
 		}
 
@@ -449,10 +535,11 @@ $(document).ready(function() {
 		activateTools();
 		outputSVG();
 		return false;
+	case 'select':
 	case 'link':
+		// Clear Active Box and Do Nothing
 		if ($(event.target).attr('id') == 'flowchart') {
-			$('div#flowchart > div[id^="htmlRect_"]').css({outline:'0 none'});
-			objFlowChart.eleActive = null;
+			objFlowChart.clearActiveBox();
 		}
 		return false;
 	}});

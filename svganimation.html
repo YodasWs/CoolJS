@@ -11,56 +11,105 @@ svg {
 <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
 <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.23/jquery-ui.min.js"></script>
 <script type="text/javascript">
+// SVG Object for Manipulation with JavaScript/jQuery
+var svg = {
+	'xml': $('<code>'),
+	'code': $('<div>'),
+	copySVG: function() {
+		// Copy SVG
+		var startCode = $('svg').wrap('<div>').closest('div').html();
+		$('svg').unwrap();
+		this.xml = this.xml.text(startCode);
+		this.code = this.code.html(this.xml.text().replace(/<\/?svg.*>/g, ''));
+	},
+	updateSVG: function() {
+		// Now Output SVG
+		this.xml.text(this.xml.text().match(/<svg.*>/)[0] + this.code.html() + this.xml.text().match(/<\/svg>/)[0]);
+		$('svg').wrap('<div>').parent().html(this.xml.text());
+		$('svg').siblings().remove();
+		$('svg').unwrap();
+	}
+};
 $(document).ready(function() {
-	// Copy SVG
-	var startCode = $('svg').wrap('<div>').closest('div').html();
-	$('svg').unwrap();
-	var code = $('<code>').text(startCode);
-	var hiddenSVG = $('<div>').html(
-		code.text().replace(/<\/?svg.*>/g, '')
-	);
+	// Copy Default SVG
+	svg.copySVG();
+
 	// Manipulate SVG as desired
-	hiddenSVG.children('circle').attr('cx',400).attr('cy',500).attr('r',1).html(
-'<animate attributeName="cy" from="500" to="200" begin="0s;rise.end+1.2s" dur="2s" repeatCount="1" fill="freeze" '+
-' calcMode="spline" keyTimes="0;1" keySplines="0 .2 .8 .9" id="rise" />' +
+	svg.code.children('circle').attr('cx',400).attr('cy',500).attr('r',1).html(
+//		'<animateMotion begin="0s" dur="1s" repeatCount="1" rotate="none" path="M 400 500 V 200" />'
+//		'<animateMotion begin="2s" dur="1s" repeatCount="1" rotate="none" path="M 400 500 V 200" />'+
+'<animate attributeName="cy" from="500" to="200" begin="0s" dur="2s" repeatCount="1" fill="freeze" '+
+' calcMode="spline" keyTimes="0;1" keySplines="0 .2 .4 .8" id="rise" />' +
 '<animate attributeName="r" values="0;5;5;0" begin="rise.begin" dur="2s" repeatCount="1" fill="freeze" ' +
 ' calcMode="spline" keyTimes="0;.1;.9;1" keySplines="0 0 .1 .1;.1 .1 .9 .9;.9 .9 1 1" />'
 	);
-	hiddenSVG.find('g#burst > circle').each(function(i) {
+	for (var i=0; i<100; i++) {
+		svg.code.find('g#burst').append('<circle/>');
+	}
+	svg.code.find('g#burst > circle').each(function(i) {
+		var angle = Math.PI * 2 * i * Math.random();
+		var speed = Math.floor(Math.random() * (500 - 10) + 10);
 		$(this).attr('cx',0).attr('cy',0).attr('r',0).css({
 			'stroke':'none','fill':'#b8860b'
 		}).html(
-'<animate attributeName="cy" from="0" to="' + (Math.sin(Math.PI * 2 * i / 3) * 200) + '" begin="rise.end" dur="1s" repeatCount="1" fill="freeze" />' +
-'<animate attributeName="cx" from="0" to="' + (Math.cos(Math.PI * 2 * i / 3) * 200) + '" begin="rise.end" dur="1s" repeatCount="1" fill="freeze" />' +
-'<animate attributeName="r" values="0;5;5;0" begin="rise.end" dur="1s" repeatCount="1" id="enlarge' + i + '" ' +
+'<animate attributeName="cy" from="0" to="' + (Math.sin(angle) * speed) + '" begin="rise.end" dur="2s" repeatCount="1" fill="freeze" />' +
+'<animate attributeName="cx" from="0" to="' + (Math.cos(angle) * speed) + '" begin="rise.end" dur="2s" repeatCount="1" fill="freeze" />' +
+'<animate attributeName="r" values="0;10;10;0" begin="rise.end" dur="2s" repeatCount="1" id="enlarge' + i + '" ' +
 ' calcMode="spline" keyTimes="0;.1;.8;1" keySplines="0 0 .1 .1;.1 .1 .8 .8;.8 .8 1 1" />' +
 '<animateColor attributeName="fill" to="' + (function(i) {
-		switch (i) {
+		if (typeof i == 'string') i = parseInt(i, 10);
+		switch (Math.floor(i * 5) % 5) {
 			case 0: return '#dc143c'; // Crimson
-			case 1: return '#1e90ff'; // DodgerBlue
-			default: return '#228b22'; // ForestGreen
+			case 1: return '#ffd700'; // Gold
+			case 2: return '#228b22'; // ForestGreen
+			case 3: return '#1e90ff'; // DodgerBlue
+			case 4: return '#ff00ff'; // Fuchsia
 		}
-	})(i) + '" begin="rise.end" dur=".1s" repeatCount="1" fill="freeze" />' +
-'<animateColor attributeName="fill" to="#000000" begin="enlarge'+i+'.end + .5s" dur=".3s" repeatCount="1" fill="freeze" />'
+	})(Math.random() * angle / 2 / Math.PI) + '" begin="rise.end" dur=".1s" repeatCount="1" fill="freeze" />' +
+'<animateColor attributeName="fill" to="#000000" begin="enlarge'+i+'.end + 1.5s" dur=".3s" repeatCount="1" fill="freeze" />'
 		);
 	}).closest('g').attr('transform','translate(400,200)');
 
-	// Now Output SVG
-	code.text(code.text().match(/<svg.*>/)[0] + hiddenSVG.html() + code.text().match(/<\/svg>/)[0]);
-	$('svg').wrap('<div>').parent().html(code.text());
-	$('svg').siblings().remove();
-	$('svg').unwrap();
+	// Output SVG
+	svg.updateSVG();
+
+	// Infinite Loop
+	setTimeout(arguments.callee, 4200);
 });
 </script>
 </head>
 <body>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" viewBox="0 0 800 500">
-<circle style="stroke:none;fill:black" />
+<circle style="stroke:none;fill:black">
+<!--
+	<animateMotion begin="0s" dur="1s" repeatCount="1" rotate="none" path="M 400 500 V 200" onend="alert('sbg was here')" />
+-->
+</circle>
 <g id="burst">
-	<circle cx="0" cy="0" r="0" style="stroke:none;fill:green"/>
-	<circle cx="0" cy="0" r="0" style="stroke:none;fill:blue"/>
-	<circle cx="0" cy="0" r="0" style="stroke:none;fill:red"/>
 </g>
+<!--
+<g transform="translate(400,200)">
+	<path d="M 0 0 h 50 v 50 z" style="stroke:black;fill:none"/>
+	<text x="55" y="27">sin &theta;</text>
+	<text x="15" y="-5">cos &theta;</text>
+</g>
+<path d="M 400,200 q 50,50 100,0 l -100,0 l 50,50 l 50,-50 m -50,0 l 0,50" style="stroke:black;fill:none"/>
+<path d="M 400,200 A 25,50 -40 1,0 450,200" style="stroke:black;fill:none"/>
+-->
 </svg>
+<!--
+<g>
+	<rect x="0" y="0" width="100" height="50" stroke="black" stroke-width="1" fill="none"/>
+	<text x="10" y="30">Hello World</text>
+<animateMotion begin="0s" dur="2s" repeatCount="1" rotate="auto" fill="remove"><mpath xlink:href="#pathway"/></animateMotion>
+	<animateTransform attributeName="transform" begin="0s" dur="2s" type="translate"
+		values="200 0;0 200;200 0" repeatCount="1.5" fill="freeze" additive="sum"
+	/>
+	<animateTransform attributeName="transform" begin="0s" dur="2s" type="rotate"
+		from="0 50 25" to="360 50 25" repeatDur="3s" additive="sum" fill="freeze"
+	/>
+</g>
+<path id="pathway" class="link" d="M 297 93 q 0 170 170 170" style="display:none"/>
+-->
 </body>
 </html>
