@@ -33,14 +33,14 @@ This project is still in its infancy. Please be kind.
 
 ### Features
 
-You can add rectangular and elliptical text boxes and then add links between the boxes. If you don't like where you placed a box, just drag and drop it into a new place!
-
-Currently everything is in black and white and angular. More features and options to come!
+You can add rectangular and elliptical text boxes and then add links between the boxes.
+If you don't like where you placed a box, just drag and drop it into a new place!
+You can also edit the bord width and color of the text boxes!
 
 ### Desired Features
 
 * Text Boxes
- * Set colors: border, background, text color
+ * Set colors: background, text color
  * Set padding, width, height
  * Add rounded corners
 * Links
