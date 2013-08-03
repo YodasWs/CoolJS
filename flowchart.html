@@ -232,6 +232,12 @@ var objFlowChart = {
 	clearActiveBox:function() {
 		this.eleActive = null;
 		$('div#flowchart > div[id^="htmlRect_"]').css({outline:''});
+		// Hide Element Tools
+		switch ($('input[name="newItemType"]:checked').attr('value')) {
+		case 'select':
+			$('#elementStyling').hide().children('input').hide().blur();
+			break;
+		}
 	},
 	setActiveBox:function(box) {
 		switch($.type(box)) {
@@ -246,7 +252,23 @@ var objFlowChart = {
 		}
 		var set = ($(this.eleActive).attr('id') == $(box).attr('id')) ? false : true;
 		this.clearActiveBox();
-		if (set && $.type(box) == 'object') this.eleActive = box.css({outline:'1px solid dodgerblue'}).get(0);
+		if (set && $.type(box) == 'object') {
+			// Display Element Tools
+			switch ($('input[name="newItemType"]:checked').attr('value')) {
+			case 'select':
+				if (box.is('[id^="htmlRect_"]')) {
+					// Set Correct Values
+					$('#elementStyling input[name="boxShape"][value="' + box.data('shape') + '"]').click().show();
+// TODO: Does Chrome Color-picker Require Hex RBG ?
+					$('#elementStyling input[name="boxBorder[color]"]').attr('value',box.css('border-color')).show();
+					$('#elementStyling input[name="boxBorder[width]"][value="' + box.css('border-width') + '"]').click().show();
+					$('#elementStyling').show();
+				}
+				break;
+			}
+			// Activate Element
+			this.eleActive = box.css({outline:'1px solid dodgerblue'}).get(0);
+		}
 	}
 };
 var activateTools = function() {
@@ -256,19 +278,39 @@ var activateTools = function() {
 	// Set Environment for Selected Tool
 	switch ($('input[name="newItemType"]:checked').attr('value')) {
 	case 'textbox':
-		$('#elementStyling').html('').append(
-			'<li><label><input type="radio" name="boxShape" value="rect" checked />Rectangle'
-		).append(
-			'<li><label><input type="radio" name="boxShape" value="ellipse" />Ellipse'
-		).append(
-			'<li>Border: <input type="color" name="boxBorder[color]" placeholder="color" value="#000000" />'
-+'<ul>'
-+'<li><label><input type="radio" name="boxBorder[width]" value="0px" />None</label></li>'
-+'<li><label><input type="radio" name="boxBorder[width]" value="1px" checked />1px</label></li>'
-+'<li><label><input type="radio" name="boxBorder[width]" value="2px" />2px</label></li>'
-+'<li><label><input type="radio" name="boxBorder[width]" value="3px" />3px</label></li>'
-+'</ul>'
-		).show();
+	case 'select':
+		$('#elementStyling').html('').hide().append(
+			// Set Box Shape
+			'<li><label><input type="radio" name="boxShape" value="rect" checked />Rectangle</label></li>'
+			+'<li><label><input type="radio" name="boxShape" value="ellipse" />Ellipse</label></li>'
+	`	).append(
+			// Set Box Border
+// TODO: Use Chrome Color-picker
+			'<li>Border: <input type="text" name="boxBorder[color]" placeholder="color" value="#000000" />'
+			+'<ul>'
+			+	'<li><label><input type="radio" name="boxBorder[width]" value="0px" />None</label></li>'
+			+	'<li><label><input type="radio" name="boxBorder[width]" value="1px" checked />1px</label></li>'
+			+	'<li><label><input type="radio" name="boxBorder[width]" value="2px" />2px</label></li>'
+			+	'<li><label><input type="radio" name="boxBorder[width]" value="3px" />3px</label></li>'
+			+'</ul></li>'
+		);
+		if ($('input[name="newItemType"]:checked').attr('value') == 'textbox')
+			$('#elementStyling').show();
+		if ($('input[name="newItemType"]:checked').attr('value') == 'select') {
+			// TODO: Update Box Design Onchange
+			$('#elementStyling input').change(function() {
+			if (!objFlowChart.eleActive) return false;
+			if ($(this).is(':radio') && !$(this).is('checked'))
+				return true;
+			switch ($(this).attr('name')) {
+			case 'boxShape':
+				break;
+			case 'boxBorder[color]':
+				break;
+			case 'boxBorder[width]':
+				break;
+			}});
+		}
 		break;
 	case 'link':
 		$('#elementStyling').html('').append(
