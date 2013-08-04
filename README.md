@@ -80,3 +80,14 @@ The bézier curve's end points have been anchored to show the resulting time fun
 
 ### Known Browser Support
 * Chrome 24+
+
+## Custom Drop Down Menus
+
+**select.html**
+
+Work for a jQuery-based add-on for drop down menus that can be easily styled with CSS.
+
+I would like to remove the jQuery code and ensure this can be used as an add-on in any site for all major browsers.
+
+### Known Browser Support
+* Chrome 24+
