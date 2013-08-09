@@ -9,7 +9,14 @@ You can see the pages working in your browser [here](http://yodasws.github.io/Co
 
 **history.html**
 
-A test of the HTML5 History API.
+A test of the HTML5 History API's history.pushState and onpopstate
+
+Now with a polyfill for IE using onhashchange.
+
+### Known Browser Support
+* Chrome
+* Firefox
+* IE8+
 
 ## Fireworks
 
