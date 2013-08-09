@@ -3,7 +3,7 @@
 <head>
 <title>Custom Select Field</title>
 <meta charset="utf-8" />
-<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+<!--[if lt IE 9]><script type="text/javascript" src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js" type="text/javascript"></script>
 <script type="text/javascript">
 if (!window.jQuery) document.write('<script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js" type="text/javascript"><\/script>');
@@ -28,7 +28,7 @@ input[type="text"]:focus, input[type="text"]:active {
 ul.datalist {
 	list-style: none; background: white;
 	box-shadow: 2px 2px 5px grey; padding: 0;
-border: 1px solid green;
+	border: 1px solid grey;
 }
 ul.datalist > li {
 	padding: 2px 5px;
@@ -40,11 +40,47 @@ ul.datalist > li[selected] {
 	font-weight: bold;
 }
 </style>
-<script type="application/json" id="datalist">
-{'select-list-1':[]}
+<script type="text/data" class="datalist">
+{"select-list-1":[
+	{"label":"Internet Explorer","value":"ms"},
+	{"label":"Firefox","value":"moz"},
+	{"label":"Chrome","value":"webkit"},
+	{"webkit":"Safari"}
+]}
 </script>
 <script type="text/javascript">
+//if (typeof (new String).trim !== 'function')
+String.prototype.trim = function(chars) {
+	return this.replace(new RegExp('^[' + (chars || '\\s') + ']+|[' + (chars || '\\s') + ']+$', 'g'), '');
+};
+if(!Array.isArray) {
+	Array.isArray = function (vArg) {
+		return Object.prototype.toString.call(vArg) === "[object Array]";
+	};
+}
 $(document).ready(function() {
+	$('script.datalist').each(function() {
+		var datalist,list,i,j,k;
+		if (JSON.parse) try {
+			datalist = JSON.parse($(this).text().replace(/\s+/g, ' ').trim());
+			for (i in datalist) {
+				if ($('input[list="'+i+'"]').length != 1) continue;
+				if (!Array.isArray(datalist[i])) continue;
+				list = $('<ul>').attr('id',i).addClass('datalist');
+				for (j in datalist[i]) {
+					if (datalist[i][j].label && datalist[i][j].value) {
+						list.append('<li value="' + datalist[i][j].value + '">' + datalist[i][j].label + '</li>');
+					} else if (typeof datalist[i][j] == 'object') {
+						for (k in datalist[i][j])
+							list.append('<li value="' + k + '">' + datalist[i][j][k] + '</li>');
+					}
+				}
+				$('input[list="'+i+'"]').after(list);
+			}
+		} catch(e) {
+			alert(e);
+		}
+	});
 	$('input[list]').filter(function() {
 		// Check for datalist to modify
 		if ($('ul#' + $(this).attr('list')).length != 1) return false;
@@ -134,12 +170,14 @@ $(document).ready(function() {
 <h1>Custom Select Field</h1>
 <div style="position: relative;border:1px solid red;min-height:100px">
 	<input type="text" list="select-list-1" style="position:absolute;right:1em;bottom:1em" />
+<!--
 	<ul class="datalist" id="select-list-1">
 		<li>IE10</li>
 		<li selected>Chrome</li>
 		<li>Firefox</li>
 		<li>FirefoxFirefoxFirefoxFirefoxFirefoxFirefoxFirefoxFirefoxFirefoxFirefox</li>
 	</ul>
+-->
 </div>
 <select>
 	<option>IE10</option>
