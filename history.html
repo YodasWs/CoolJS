@@ -2,13 +2,55 @@
 <html>
 <head>
 <title>History API</title>
+<!--[if lt IE 9]><script type="text/javascript" src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.23/jquery-ui.min.js"></script>
 <style type="text/css">
 h1 { text-align: center; }
 </style>
-<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
-<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.23/jquery-ui.min.js"></script>
+<script type="text/javascript">
+if (typeof history.pushState !== 'function') {
+	history.states = [];
+	history.pushState = function(state, title, url) {
+		var search = {};
+		var query = location.search || '?';
+		var vars = query.substr(1).split('&');
+		for (i in vars) {
+			key = decodeURIComponent(vars[i].substr(0, vars[i].indexOf('=')));
+			search[key] = decodeURIComponent(vars[i].substr(vars[i].indexOf('=')+1));
+		}
+		search.state = encodeURIComponent(JSON.stringify(state))
+		search.url = encodeURIComponent(url);
+		var hash = parseInt(location.hash.substr(1), 10) + 1 || 1;
+		history.states[hash] = search;
+		location.hash = hash;
+	}
+	window.onhashchange = function() {
+		history.state = history.states[parseInt(location.hash.substr(1), 10)];
+		// Create popstate Event, http://stackoverflow.com/questions/2490825/how-to-trigger-event-in-javascript
+		var event;
+		if (document.createEvent) {
+			event = document.createEvent("HTMLEvents");
+			event.initEvent("popstate", true, true);
+		} else {
+			event = document.createEventObject();
+			event.eventType = "popstate";
+		}
+		event.eventName = 'popstate';
+		event.memo = {};
+		if (document.createEvent) {
+			window.dispatchEvent(event);
+		} else {
+			window.fireEvent("on" + event.eventType, event);
+		}
+	}
+}
+</script>
 <script type="text/javascript">
 var changePage = function(link) {
+	if (typeof history.state === 'object' && history.state && typeof history.state.url === 'string') {
+		link = decodeURIComponent(history.state.url);
+	}
 	switch (link) {
 	case '/more_history.php':
 		window.title = 'More History!';
@@ -28,10 +70,10 @@ var changePage = function(link) {
 };
 $(document).ready(function() {
 	changePage(location.pathname);
-	$('a').bind('click', function(e) {
+	$('a').bind('click', function() {
 		history.pushState(null, null, $(this).attr('href'));
-		e.preventDefault();
 		changePage(location.pathname);
+		return false;
 	});
 	$(window).bind('popstate', function() {
 		changePage(location.pathname);
