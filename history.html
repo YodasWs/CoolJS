@@ -12,44 +12,32 @@ h1 { text-align: center; }
 if (typeof history.pushState !== 'function') {
 	history.states = [];
 	history.pushState = function(state, title, url) {
-		var search = {};
-		var query = location.search || '?';
-		var vars = query.substr(1).split('&');
-		for (i in vars) {
-			key = decodeURIComponent(vars[i].substr(0, vars[i].indexOf('=')));
-			search[key] = decodeURIComponent(vars[i].substr(vars[i].indexOf('=')+1));
-		}
-		search.state = encodeURIComponent(JSON.stringify(state))
-		search.url = encodeURIComponent(url);
+		state = state || {};
+		state.url = url;
 		var hash = parseInt(location.hash.substr(1), 10) + 1 || 1;
-		history.states[hash] = search;
+		history.states[hash] = state;
 		location.hash = hash;
 	}
+	if (!document.createEvent && !window.onpopstate)
+		window.onpopstate = function(event) {};
 	window.onhashchange = function() {
 		history.state = history.states[parseInt(location.hash.substr(1), 10)];
 		// Create popstate Event, http://stackoverflow.com/questions/2490825/how-to-trigger-event-in-javascript
-		var event;
-		if (document.createEvent) {
-			event = document.createEvent("HTMLEvents");
+		if (window.jQuery) $(window).trigger('popstate');
+		else if (document.createEvent) {
+			var event = document.createEvent("HTMLEvents");
 			event.initEvent("popstate", true, true);
-		} else {
-			event = document.createEventObject();
-			event.eventType = "popstate";
-		}
-		event.eventName = 'popstate';
-		event.memo = {};
-		if (document.createEvent) {
+			event.eventName = 'popstate';
 			window.dispatchEvent(event);
-		} else {
-			window.fireEvent("on" + event.eventType, event);
-		}
+		} else if (typeof window.onpopstate == 'function')
+			window.onpopstate();
 	}
 }
 </script>
 <script type="text/javascript">
 var changePage = function(link) {
 	if (typeof history.state === 'object' && history.state && typeof history.state.url === 'string') {
-		link = decodeURIComponent(history.state.url);
+		link = history.state.url;
 	}
 	switch (link) {
 	case '/more_history.php':
