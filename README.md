@@ -96,7 +96,7 @@ Work for a jQuery-based add-on for drop down menus that can be easily styled wit
 
 I would like to remove the jQuery code and ensure this can be used as an add-on in any site for all major browsers.
 
-This, sadly, does not use the <select> HTML markup, but instead <input type="text" list="..."/> and either JSON or <ul>
+This, sadly, does not use the <select> HTML markup, but instead &lt;input type="text" list="..."/> and either JSON or &lt;ul>
 
 ### Known Browser Support
 * Chrome 24+
