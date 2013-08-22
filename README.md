@@ -16,19 +16,6 @@ Using anchors and scrolling to have a single web page appear to be multiple page
 ### Known Browser Support
 * Chrome
 
-## History API Test
-
-**history.html**
-
-A test of the HTML5 History API's history.pushState and onpopstate
-
-Now with a polyfill for IE using onhashchange.
-
-### Known Browser Support
-* Chrome
-* Firefox
-* IE8+
-
 ## Fireworks
 
 **fireworks.html**
@@ -112,3 +99,11 @@ This, sadly, does not use the <select> HTML markup, but instead &lt;input type="
 ### Known Browser Support
 * Chrome 24+
 * IE8+
+
+## History API Test
+
+**history.html**
+
+A test of the HTML5 History API's history.pushState and onpopstate
+
+See also [upgrdr](https://github.com/YodasWs/upgrdr/blob/master/history.js) for IE8 polyfill
