@@ -5,6 +5,20 @@ Some fun JavaScript projects of mine.
 
 You can see the pages working in your browser [here](http://yodasws.github.io/CoolJS/)
 
+<<<<<<< HEAD
+=======
+## Scrolling Page App
+
+**scroll.html**
+
+Using anchors and scrolling to have a single web page appear to be multiple pages!
+
+(With the help of jQuery, at least initially)
+
+### Known Browser Support
+* Chrome
+
+>>>>>>> 2e63d2ae34d9e55ce75a1c7cca8c5975fff60675
 ## History API Test
 
 **history.html**
