@@ -1,0 +1,154 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+<title>Scrolling Page!</title>
+<!--[if lt IE 9]><script type="text/javascript" src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+<script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.23/jquery-ui.min.js"></script>
+<style type="text/css">
+body > h1 { text-align: center; }
+body {
+	min-height: 1000px; width: 100%; padding: 0; margin: 0;
+	background: lightgrey;
+}
+body > nav {
+	display: block; position: absolute; width: 200px; padding: 0; border-bottom: 1px solid black;
+	top: 100px; left: 10px; margin-top: 100px;
+}
+body > nav > a {
+	display: block; width: 100%; padding: 2px 5px; border: 1px solid black; margin: 0;
+	color: dodgerblue; text-decoration: none; border-bottom: 0 none;
+	-webkit-box-sizing: border-box; -moz-box-sizing: border-box; box-sizing: border-box;
+	background: white;
+}
+body > nav > a:hover {
+	text-decoration: underline;
+}
+body > nav > a.active {
+	background: lightblue; color: black;
+	-webkit-transition: color .5s, background-color 1s;
+	-moz-transition: color .5s, background-color 1s;
+	-ms-transition: color .5s, background-color 1s;
+	-o-transition: color .5s, background-color 1s;
+	transition: color .5s, background-color 1s;
+}
+body > nav > a.active:hover {
+	text-decoration: none;
+}
+body > section {
+	background: white;
+	margin: 0px 250px;
+	min-height: 1000px;
+}
+</style>
+<script type="text/javascript">
+$(document).ready(function() {
+	$('body > nav > a[href^="#"]').bind('click.nav', function() {
+		if ($(this).is('.active')) return false;
+		var speed, pos = $($(this).attr('href')).offset().top;
+		if ($(this).attr('href') == '#top') pos = 0;
+		// Calculate Animation Runtime
+		switch(upgrdr.options().scroll.unit) {
+		case 'ms': // milliseconds
+			speed = upgrdr.options().scroll.speed;
+			break;
+		case 'sec': case 's': // seconds
+			speed = upgrdr.options().scroll.speed * 1000;
+			break;
+		case 'ms/hp': // milliseconds per 100 pixels
+			speed = upgrdr.options().scroll.speed * Math.abs($(document).scrollTop()- pos) / 100;
+			break;
+		case 'ms/kp': // milliseconds per 1000 pixels
+			speed = upgrdr.options().scroll.speed * Math.abs($(document).scrollTop()- pos) / 1000;
+			break;
+		}
+		// Constrain animation runtime (default 400 < x < 1000)
+		speed = Math.min(Math.max(speed, upgrdr.options().scroll.minTime), upgrdr.options().scroll.maxTime);
+		// Scroll!
+		$('body').stop(true, false).animate({
+			scrollTop:pos
+		}, speed, upgrdr.options().scroll.easing, function() {
+		});
+		return false;
+	});
+	$(window).scroll(function() {
+		var minScroll = parseInt($('body > nav').css('top'), 10) || 0;
+		// Position Main Menu
+		if ($('body').scrollTop() > minScroll) {
+			$('body > nav').css({
+				position:'fixed',top:'0px'
+			});
+		} else {
+			$('body > nav').css({
+				position:'',top:''
+			});
+		}
+		// Active Current Nav Link
+		var lastY = 0, navPos = -1;
+		$('body > nav > a[href^="#"]').each(function(i) {
+			lastY = $($(this).attr('href')).offset().top;
+			if (typeof upgrdr.options().scroll.margin == 'number')
+				lastY -= upgrdr.options().scroll.margin;
+			else if (/\d+%/.test(upgrdr.options().scroll.margin))
+				lastY -= parseInt(upgrdr.options().scroll.margin, 10) * $(window).height() / 100;
+			if ($('body').scrollTop() < lastY) {
+				navPos = Math.max(i-1, 0);
+				return false;
+			}
+		}).removeClass('active');
+		if (navPos < 0) navPos = $('body > nav > a[href^="#"]').length-1;
+		if ($($('body > nav > a[href^="#"]').get(navPos)).attr('href') != '#top')
+			$($('body > nav > a[href^="#"]').get(navPos)).addClass('active');
+	}).keyup(function(event) {
+		if (event.keyCode == 27) // Escape
+			$('body').stop(true, false);
+	});
+});
+</script>
+<script type="text/javascript">
+if (!window.upgrdr) upgrdr = {
+	_options:{
+		scroll:{
+			easing:'easeInOutSine',
+			maxTime:1000,
+			minTime:400,
+			margin:'40%',
+			speed:800,
+			unit:'ms'
+		}
+	}
+};
+if (!upgrdr.options) upgrdr.options = function() {
+	if (arguments.length) {
+		arguments = Array.prototype.slice.call(arguments);
+		var object = arguments.shift();
+		for (i in arguments) {
+			if (typeof arguments[i] == 'object')
+				for (j in arguments[i])
+					upgrdr._options[object][j] = arguments[i][j];
+		}
+	}
+	return upgrdr._options;
+};
+upgrdr.options('scroll', {speed:80,unit:'ms/hp'});
+</script>
+</head>
+<body>
+<nav>
+<a href="#top">Home</a>
+<a href="#about">About</a>
+<a href="#docs">Documentation</a>
+<a href="#help">Support</a>
+</nav>
+<h1 id="top">Scrolling Page!</h1>
+<section>
+	<h1 id="about">About</h1>
+</section>
+<section>
+	<h1 id="docs">Documentation</h1>
+</section>
+<section>
+	<h1 id="help">Support</h1>
+</section>
+</body>
+</html>
